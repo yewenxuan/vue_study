@@ -2,83 +2,223 @@
 
 <head>
     <style>
+        .red {
+            color: red;
+        }
 
+        .green {
+            color: green;
+        }
     </style>
     <script src='./vue.js'></script>
 </head>
 
 <body>
     <div id='app'>
+        <my-component></my-component>
+        <div v-if="type === 'A'">
+            A
+        </div>
+        <div v-else-if="type === 'B'">
+            B
+        </div>
+        <div v-else-if="type === 'C'">
+            C
+        </div>
+        <div v-else>
+            Not A/B/C
+        </div>
+        <p v-text='message' v-bind:class="{ red: isActive }"></p>
+        <div v-bind:class="[{ red: isActive }, err]">{{message}}</div>
+        <div v-html="rawHtml"></div>
+        <p>{{reversedMessage2}}</p>
+        <p>{{now}}</p>
         {{message}}<button v-on:click="reverseMessage">逆转消息</button>
+        <p>{{fullName}}</p>
+        <div>
+            {{ message.split('').reverse().join('') }}
+        </div>
         <ol>
-            <li v-for='todo in todos'>{{todo.text}}</li>
+            <li v-for='(todo,index) in todos'>{{index}}{{todo.text}}</li>
+            <li v-for='n in 3'>{{n}}</li>
         </ol>
+        <simple-counter></simple-counter>
+        <simple-counter></simple-counter>
+        <simple-counter></simple-counter>
     </div>
     <div id='app-2'>
+        <button v-on:click="say('hi')">Say hi</button>
+        <button v-on:click="say('what')">Say what</button>
         <span v-bind:title='message'>鼠标悬停查看动态绑定的提示信息</span>
     </div>
     <div id='app-3'>
         <p v-if='seen'>现在你看到我了</p>
+        <input type="checkbox" id="jack" value="Jack" v-model="checkedNames">
+        <label for="jack">Jack</label>
+        <input type="checkbox" id="john" value="John" v-model="checkedNames">
+        <label for="john">John</label>
+        <input type="checkbox" id="mike" value="Mike" v-model="checkedNames">
+        <label for="mike">Mike</label>
+        <br>
+        <span>Checked names: {{ checkedNames }}</span>
     </div>
     <div id='app-4'>
         <p>{{message}}</p>
-        <input v-model='message'>
+        <input v-model='message' v-on:keyup.enter="enter">
+        <br/>
+        <input type="radio" id="one" value="One" v-model="picked">
+        <label for="one">One</label>
+        <br>
+        <input type="radio" id="two" value="Two" v-model="picked">
+        <label for="two">Two</label>
+        <br>
+        <span>Picked: {{ picked }}</span>
+        <br>
+        <select v-model="selected">
+            <option disabled value="">请选择</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+        </select>
+        <span>Selected: {{ selected }}</span>
     </div>
     <div id='app-5'>
+        我能自动过滤空格<input v-model.trim="msg">
+        <br/>
+        <template v-if="loginType === 'username'">
+            <label>Username</label>
+            <input placeholder="Enter your username" key="username-input"><button onclick='qiehuan()'>点击切换input</button>
+        </template>
+        <template v-else>
+            <label>Email</label>
+            <input placeholder="Enter your email address" key="email-input"><button onclick='qiehuan("username")'>点击切换input</button>
+        </template>
         <ol>
-            <todo-item v-for="item in groceryList" v-bind:todo="item"></todo-item>
+            <todo-item v-for="item in groceryList" v-bind:todo="item" class='a b' v-bind:style="styleObject"></todo-item>
         </ol>
+        <h1 v-show="ok">Hello!</h1>
+        <button v-on:click="counter += 1">增加 1</button>
+        <p>这个按钮被点击了 {{ counter }} 次。</p>
     </div>
 </body>
 <script>
+    var Child = {
+        template: '<div>A custom component!</div>'
+    }
+    var data = { counter: 0 }
     var app = new Vue({
         el: '#app',
         data: {
+            type: 'A',
             message: 'Hello Vue!',
             todos: [
                 { text: '学习Javascript' },
                 { text: '学习 Vue' },
                 { text: '整个牛项目' }
-            ]
+            ],
+            rawHtml: '<b>加粗</b>Hello',
+            firstName: 'Foo',
+            lastName: 'Bar',
+            isActive: true,
         },
         methods: {
+            err: 1,
             reverseMessage: function () {
                 this.message = this.message.split('').reverse().join('')
             }
+        },
+        computed: {
+            fullName: {
+                // getter
+                get: function () {
+                    return this.firstName + ' ' + this.lastName
+                },
+                // setter
+                set: function (newValue) {
+                    var names = newValue.split(' ')
+                    this.firstName = names[0]
+                    this.lastName = names[names.length - 1]
+                }
+            },
+            now: function () {
+                return Date.now()
+            },
+            reversedMessage2: function () {
+                return this.message.split('').reverse().join('')
+            }
+        },
+        components: {
+            'my-component': Child,
+            'simple-counter': {
+        template: '<button v-on:click="counter += 1">{{ counter }}</button>',
+        // 技术上 data 的确是一个函数了，因此 Vue 不会警告，
+        // 但是我们返回给每个组件的实例的却引用了同一个data对象
+        data: function () {
+            //return data 3个共享一个data 数字一块变
+            return {
+                counter:0
+            }
+        }
+    }
         }
     })
     var app2 = new Vue({
         el: '#app-2',
         data: {
             message: '页面加载于' + new Date()
+        },
+        methods: {
+            say: function (message) {
+                alert(message)
+            }
         }
     })
     var app3 = new Vue({
         el: '#app-3',
         data: {
-            seen: true
+            seen: true,
+            checkedNames: []
         }
     })
     var app4 = new Vue({
         el: '#app-4',
         data: {
-            message: 'Hello Vue!'
+            message: 'Hello Vue!',
+            picked: '',
+            selected: ''
+        },
+        methods: {
+            enter: function () {
+                alert('你按了回车键');
+            }
         }
     })
     Vue.component('todo-item', {
         props: ['todo'],
-        template: '<li>{{ todo.text }}</li>'
+        template: '<li class="c d">{{ todo.text }}</li>'
     })
     var app5 = new Vue({
         el: '#app-5',
+        rawHtml: '12312',
         data: {
+            ok: 1,
+            loginType: 'username',
             groceryList: [
                 { text: '蔬菜' },
                 { text: '奶酪' },
                 { text: '随便其他什么人吃的东西' }
-            ]
+            ],
+            styleObject: {
+                color: 'red',
+                fontSize: '18px'
+            },
+            counter: 0,
+            msg: ''
         }
     })
+    function qiehuan(val) {
+        app5.loginType = val
+    }
 
 </script>
 
